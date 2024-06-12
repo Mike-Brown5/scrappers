@@ -124,7 +124,7 @@ def collectTheCompaniesData(companiesList):
                     showPhoneNumber = WebDriverWait(driverY,10).until(EC.presence_of_element_located((By.XPATH,"./html/body/div[1]/main/div[2]/div[2]/div[2]/div[2]/section/div[2]/div[2]/a")))
                     if showPhoneNumber is not None:
                         showPhoneNumber.click()
-                        time.sleep(2)
+                        time.sleep(1)
                         phoneNumber = WebDriverWait(driverY,10).until(EC.presence_of_element_located((By.XPATH,".//*[@id='organziationPhoneReveal']")))
                         phoneNumber = phoneNumber.text.strip()
                         phoneNumber= [line.strip() for line in phoneNumber.split('\n') if line.strip()]
@@ -135,7 +135,7 @@ def collectTheCompaniesData(companiesList):
                     showPhoneNumber = WebDriverWait(driverY,10).until(EC.presence_of_element_located((By.XPATH,"./html/body/div[1]/main/div[2]/div[2]/div[2]/div[2]/section/div[2]/div/a")))
                     if showPhoneNumber is not None:
                         showPhoneNumber.click()
-                        time.sleep(2)
+                        time.sleep(1)
                         phoneNumber = WebDriverWait(driverY,10).until(EC.presence_of_element_located((By.XPATH,".//*[@id='organziationPhoneReveal']")))
                         phoneNumber = phoneNumber.text.strip()
                         phoneNumber= [line.strip() for line in phoneNumber.split('\n') if line.strip()]
@@ -171,7 +171,7 @@ def collectTheCompaniesData(companiesList):
                             # time.sleep(10)
                             if showPhone is not None:
                                 showPhone.click()
-                                time.sleep(2)
+                                time.sleep(1)
                                 Phone = SecLoc.find_element(By.CLASS_NAME,"ml-sm-3")
                                 # time.sleep(10)
                                 print(Phone.text)
