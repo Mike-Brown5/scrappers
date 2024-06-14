@@ -78,7 +78,7 @@ class DatabaseStorage:
             cursor.execute(query, (service, name1,tags1, description, states))
             result = cursor.fetchone()
             if result is None:
-                print("data not found so I'm adding it")
+                print("Not in Database...Adding It...")
                 sql = "INSERT INTO listings_in (Service, Name, Tags, Description, Availability) VALUES (%s, %s, %s, %s, %s)"
 
                 cursor.execute(sql, (service, name1, tags1, description, states))

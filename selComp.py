@@ -3,13 +3,17 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from urllib.parse import urlparse, urlunparse
 import time
+import logging
 # import time
 from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.chrome.options import Options
 import mysql.connector
 import requests
+logging.basicConfig(level=logging.WARNING)
 url = 'https://www.mynewmarkets.com/markets'
-
-driver = webdriver.Chrome()  
+chrome_options = Options()
+chrome_options.add_argument("--headless")
+driver = webdriver.Chrome(options=chrome_options)  
 driver.get(url)
 # time.sleep(3)
 # WebDriverWait.until()
@@ -23,8 +27,8 @@ driver.get(url)
 # /html/body/div[1]/main/section[1]/div/div[1]/div/div/div[10]/div/div/a
 # /html/body/div[1]/main/section[1]/div/div[1]/div/div/div[10]/div/div/a
 def DatabaseStorage(db_config,data):
-    cnx = mysql.connector.connect(**db_config)
-    cursor = cnx.cursor()
+    # cnx = mysql.connector.connect(**db_config)
+    # cursor = cnx.cursor()
 
     for item in data:
         Company_Name = item['Company_Name']
@@ -34,22 +38,27 @@ def DatabaseStorage(db_config,data):
         HQNumber = item['HQNumber']
         OtherLocations = item['OtherLocations']
         try:
-            query = "SELECT * FROM companies_list WHERE Company_Name = %s and Company_URL=%s and Description = %s and HQAddress = %s and HqPhoneNumber = %s and OtherLocationsInfo = %s;"
-            cursor.execute(query, (Company_Name, Company_URL,Description, HQAddress, HQNumber, OtherLocations))
+            cnx = mysql.connector.connect(**db_config)
+            cursor = cnx.cursor()
+            query = "SELECT * FROM companies_list WHERE Company_Name = %s;"
+            cursor.execute(query,(Company_Name,))
             result = cursor.fetchone()
             if result is None:
-                print("data not found so I'm adding it")
+                print("Not in Database...Adding It...")
                 sql = "INSERT INTO companies_list (Company_Name, Company_URL, Description, HQAddress, HqPhoneNumber, OtherLocationsInfo) VALUES (%s, %s, %s, %s, %s, %s)"
 
                 cursor.execute(sql, (Company_Name, Company_URL,Description, HQAddress, HQNumber, OtherLocations))
+                cnx.commit()
+            cursor.close()
+            cnx.close()
         except:
             print(f"Failed to write {Company_Name} data")
 
 
         # Commit the changes and close the connection
-    cnx.commit()
-    cursor.close()
-    cnx.close()
+    # cnx.commit()
+    # cursor.close()
+    # cnx.close()
 
 def collectTheCompaniesData(companiesList):
     db_config = {
@@ -58,10 +67,11 @@ def collectTheCompaniesData(companiesList):
     'host': 'localhost',
     'database': 'Sky_ScraperDB'
     }
-    data= []
+    # data= []
     for company in companiesList:
+        data= []
         print(f"\ncollecting data from {company}\n")
-        driverY = webdriver.Chrome()
+        driverY = webdriver.Chrome(options=chrome_options)
         driverY.get(company)
         # driverY.get("https://www.mynewmarkets.com/companies/amwins") #tessting
         # /html/body/div[1]/main/div[2]/div[2]/div[1]/div/div[2]/h1
@@ -70,18 +80,18 @@ def collectTheCompaniesData(companiesList):
         try:
             try:
                 Title = WebDriverWait(driverY,10).until(EC.presence_of_element_located((By.XPATH,"./html/body/div[1]/main/div[2]/div[2]/div[1]/div[2]/div[2]/h1")))
-                print(Title.text)
+                # print(Title.text)
                 Title = Title.text
                 CompanyURL = WebDriverWait(driverY,10).until(EC.presence_of_element_located((By.XPATH,"./html/body/div[1]/main/div[2]/div[2]/div[1]/div[2]/div[2]/p")))
-                print(CompanyURL.text)
+                # print(CompanyURL.text)
                 CompanyURL = CompanyURL.text
             except:
                 try:
                     Title = WebDriverWait(driverY,10).until(EC.presence_of_element_located((By.XPATH,"./html/body/div[1]/main/div[2]/div[2]/div[1]/div/div[2]/h1")))
-                    print(Title.text)
+                    # print(Title.text)
                     Title = Title.text
                     CompanyURL = WebDriverWait(driverY,10).until(EC.presence_of_element_located((By.XPATH,"./html/body/div[1]/main/div[2]/div[2]/div[1]/div/div[2]/p")))
-                    print(CompanyURL.text)
+                    # print(CompanyURL.text)
                     CompanyURL = CompanyURL.text
                 except:
                     Title = " "
@@ -93,7 +103,7 @@ def collectTheCompaniesData(companiesList):
             # /html/body/div[1]/main/div[2]/div[2]/div[1]/div[2]/div[2]/p
             try:
                 Description = WebDriverWait(driverY,10).until(EC.presence_of_element_located((By.XPATH,"./html/body/div[1]/main/div[2]/div[2]/div[2]/div[1]/section[1]/div")))
-                print(Description.text)
+                # print(Description.text)
                 Description = Description.text
             except:
                 Description = ""
@@ -110,10 +120,10 @@ def collectTheCompaniesData(companiesList):
                 if "HEADQUARTERS" in HQAddress.text:
                     HQAddress = HQAddress.text.strip()
                     HQAddress = ' '.join([line.strip() for line in HQAddress.split('\n') if line.strip() and 'Company Headquarters' not in line])
-                    print(HQAddress)
+                    # print(HQAddress)
             except:
                 HQAddress = " "
-                print(HQAddress)
+                # print(HQAddress)
             # /html/body/div[1]/main/div[2]/div[2]/div[2]/div[2]/section/div[2]/div[2]/a
             # /html/body/div[1]/main/div[2]/div[2]/div[2]/div[2]/section/div[2]/div[2]/a
             # /html/body/div[1]/main/div[2]/div[2]/div[2]/div[2]/section/div[2]/div/a
@@ -130,7 +140,7 @@ def collectTheCompaniesData(companiesList):
                         phoneNumber= [line.strip() for line in phoneNumber.split('\n') if line.strip()]
                         phoneNumber =list(zip(phoneNumber[::2], phoneNumber[1::2]))
                         phoneNumber = ', '.join([f'{text}: {number}' for text, number in phoneNumber])
-                        print(phoneNumber)
+                        # print(phoneNumber)
                 except:
                     showPhoneNumber = WebDriverWait(driverY,10).until(EC.presence_of_element_located((By.XPATH,"./html/body/div[1]/main/div[2]/div[2]/div[2]/div[2]/section/div[2]/div/a")))
                     if showPhoneNumber is not None:
@@ -141,7 +151,7 @@ def collectTheCompaniesData(companiesList):
                         phoneNumber= [line.strip() for line in phoneNumber.split('\n') if line.strip()]
                         phoneNumber =list(zip(phoneNumber[::2], phoneNumber[1::2]))
                         phoneNumber = ', '.join([f'{text}: {number}' for text, number in phoneNumber])
-                        print(phoneNumber)
+                        # print(phoneNumber)
             except:
                 phoneNumber = " "
             try:
@@ -150,7 +160,7 @@ def collectTheCompaniesData(companiesList):
                     ShowOfficeLocations.click()
                     time.sleep(2)
                     numberOflocations = WebDriverWait(driverY,10).until(EC.presence_of_all_elements_located((By.CLASS_NAME,"organization-office")))
-                    time.sleep(10)
+                    time.sleep(5)
                     i =1
                     locationsList = []
                     # //*[@id="organizationOfficesModal"]/div/div/div[2]/div[1]/div
@@ -165,7 +175,7 @@ def collectTheCompaniesData(companiesList):
                         # time.sleep(10)
                         address = SecLoc.find_element(By.XPATH,f"//*[@id='organizationOfficesModal']/div/div/div[2]/div[{i}]/div/div[1]")
                         # time.sleep(10)
-                        print(address.text)
+                        # print(address.text)
                         try:
                             showPhone = SecLoc.find_element(By.XPATH,f"//*[@id='organizationOfficesModal']/div/div/div[2]/div[{i}]/div/div[2]/a")
                             # time.sleep(10)
@@ -174,7 +184,7 @@ def collectTheCompaniesData(companiesList):
                                 time.sleep(1)
                                 Phone = SecLoc.find_element(By.CLASS_NAME,"ml-sm-3")
                                 # time.sleep(10)
-                                print(Phone.text)
+                                # print(Phone.text)
                         except:
                             Phone = " "
                         if f"{address.text} : {Phone.text}" not in locationsList:
@@ -182,7 +192,7 @@ def collectTheCompaniesData(companiesList):
                         i = i +1
                     if locationsList:
                         locationsList = ", ".join([location for location in locationsList])
-                    print(locationsList)
+                    # print(locationsList)
             except:
                 ShowOfficeLocations = " "
                 locationsList = " "
@@ -198,10 +208,10 @@ def collectTheCompaniesData(companiesList):
         except AttributeError as e:
             print(f"Error scrapping data for result {company}: {e}")
         driverY.quit()
-    try:
-        DatabaseStorage(db_config,data)
-    except:
-        print("Failed to write into the database")
+        try:
+            DatabaseStorage(db_config,data)
+        except:
+            print("Failed to write into the database")
         
         
 
@@ -209,7 +219,7 @@ def AccessCompaniesURL(pagesList):
     listOfCompanies = []
     for link in pagesList:
         print(f"\n Starting Link {link}")
-        driverx = webdriver.Chrome()
+        driverx = webdriver.Chrome(options=chrome_options)
         driverx.get(link)
         # driverx.get("https://www.mynewmarkets.com/search/rps+signature+programs") #testing
         links= WebDriverWait(driverx,10).until(EC.presence_of_all_elements_located((By.CSS_SELECTOR,".no-expand")))
@@ -252,7 +262,7 @@ for commonSearch in searchesList:
     # constForSearch = 1
     print(f'accessing {commonSearch}')
     url = urlparse(commonSearch)._replace(query='').geturl()
-    driverOne = webdriver.Chrome()
+    driverOne = webdriver.Chrome(options=chrome_options)
     driverOne.get(url)
     try:
         numberOfPages = WebDriverWait(driverOne,10).until(EC.presence_of_all_elements_located((By.CSS_SELECTOR,".page-link")))
@@ -277,7 +287,7 @@ for commonSearch in searchesList:
         print(data)
         checkEachURL(data,url)
     except:
-        print('no more site numbers')
+        print(f'Done with sites on {commonSearch}')
         driverOne.quit()
 
     # except:
