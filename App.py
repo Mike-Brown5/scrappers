@@ -1,7 +1,10 @@
 import requests
 from bs4 import BeautifulSoup
 import mysql.connector
+from mysql.connector import errorcode
 from urllib.parse import urlparse
+import ssl
+# ssl.wrap_socket = ssl.SSLContext.wrap_socket
 class WebScraper:
     def __init__(self, url):
         self.url = url
@@ -74,12 +77,12 @@ class DatabaseStorage:
             description = item['Description']
             states = item['Availability']
 
-            query = "SELECT * FROM listings_in WHERE Service = %s and Name=%s and Tags = %s and Description = %s and Availability = %s;"
+            query = "SELECT * FROM listings_list WHERE Service = %s and Name=%s and Tags = %s and Description = %s and Availability = %s;"
             cursor.execute(query, (service, name1,tags1, description, states))
             result = cursor.fetchone()
             if result is None:
                 print("Not in Database...Adding It...")
-                sql = "INSERT INTO listings_in (Service, Name, Tags, Description, Availability) VALUES (%s, %s, %s, %s, %s)"
+                sql = "INSERT INTO listings_list (Service, Name, Tags, Description, Availability) VALUES (%s, %s, %s, %s, %s)"
 
                 cursor.execute(sql, (service, name1, tags1, description, states))
 
@@ -210,11 +213,21 @@ if __name__ == '__main__':
                             url = dataG[j] # this is the link for each listing by it self
                         # print(url)
                             scraper = WebScraper(url)
+                            # ssl_config = {
+                            #     'ssl_ca': './DigiCertGlobalRootG2.crt.pem',
+                            #     'ssl_verify_cert': True
+                            #     }
+                            # ssl_ctnx = ssl.create_default_context()
+                            # ssl_ctnx.load_verify_locations(cafile='./DigiCertGlobalRootG2.crt.pem')
+                            # ssl_ctnx.check_hostname = True
+                            # ssl_ctnx.verify_mode = ssl.CERT_REQUIRED
                             db_config = {
-                                'user': 'root',
-                                'password': '',
-                                'host': 'localhost',
-                                'database': 'Sky_ScraperDB'
+                                'user': 'riskbeanAdmin',
+                                'password': 'RB55P@$$word',
+                                'host': 'riskbean-mysql-db.mysql.database.azure.com',
+                                'database': 'riskbean_db',
+                                'client_flags': [mysql.connector.ClientFlag.SSL],
+                                'ssl_ca': './DigiCertGlobalRootG2.crt.pem'
                             }
                             search_results = scraper.scrape_search_results()
                             if search_results:

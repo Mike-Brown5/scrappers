@@ -45,7 +45,7 @@ def DatabaseStorage(db_config,data):
             result = cursor.fetchone()
             if result is None:
                 print("Not in Database...Adding It...")
-                sql = "INSERT INTO companies_list (Company_Name, Company_URL, Description, HQAddress, HqPhoneNumber, OtherLocationsInfo) VALUES (%s, %s, %s, %s, %s, %s)"
+                sql = "INSERT INTO companies_list (Company_Name, Company_URL, Description, HQAddress, HQPhoneNumber, OtherLocations) VALUES (%s, %s, %s, %s, %s, %s)"
 
                 cursor.execute(sql, (Company_Name, Company_URL,Description, HQAddress, HQNumber, OtherLocations))
                 cnx.commit()
@@ -62,10 +62,12 @@ def DatabaseStorage(db_config,data):
 
 def collectTheCompaniesData(companiesList):
     db_config = {
-    'user': 'root',
-    'password': '',
-    'host': 'localhost',
-    'database': 'Sky_ScraperDB'
+    'user': 'riskbeanAdmin',
+    'password': 'RB55P@$$word',
+    'host': 'riskbean-mysql-db.mysql.database.azure.com',
+    'database': 'riskbean_db',
+    'client_flags': [mysql.connector.ClientFlag.SSL],
+    'ssl_ca': './DigiCertGlobalRootG2.crt.pem'
     }
     # data= []
     for company in companiesList:
